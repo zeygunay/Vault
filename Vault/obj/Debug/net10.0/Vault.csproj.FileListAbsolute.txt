@@ -1,0 +1,15 @@
+C:\Users\gunay\Desktop\Vault\Vault\bin\Debug\net10.0\Vault.exe
+C:\Users\gunay\Desktop\Vault\Vault\bin\Debug\net10.0\Vault.deps.json
+C:\Users\gunay\Desktop\Vault\Vault\bin\Debug\net10.0\Vault.runtimeconfig.json
+C:\Users\gunay\Desktop\Vault\Vault\bin\Debug\net10.0\Vault.dll
+C:\Users\gunay\Desktop\Vault\Vault\bin\Debug\net10.0\Vault.pdb
+C:\Users\gunay\Desktop\Vault\Vault\obj\Debug\net10.0\Vault.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\gunay\Desktop\Vault\Vault\obj\Debug\net10.0\Vault.AssemblyInfoInputs.cache
+C:\Users\gunay\Desktop\Vault\Vault\obj\Debug\net10.0\Vault.AssemblyInfo.cs
+C:\Users\gunay\Desktop\Vault\Vault\obj\Debug\net10.0\Vault.csproj.CoreCompileInputs.cache
+C:\Users\gunay\Desktop\Vault\Vault\obj\Debug\net10.0\Vault.sourcelink.json
+C:\Users\gunay\Desktop\Vault\Vault\obj\Debug\net10.0\Vault.dll
+C:\Users\gunay\Desktop\Vault\Vault\obj\Debug\net10.0\refint\Vault.dll
+C:\Users\gunay\Desktop\Vault\Vault\obj\Debug\net10.0\Vault.pdb
+C:\Users\gunay\Desktop\Vault\Vault\obj\Debug\net10.0\Vault.genruntimeconfig.cache
+C:\Users\gunay\Desktop\Vault\Vault\obj\Debug\net10.0\ref\Vault.dll
