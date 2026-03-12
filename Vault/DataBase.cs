@@ -95,9 +95,9 @@ namespace Vault
             {
                 Users.Add(new User { UserId = 1, Username = "zey", FullName = "Zeynepnur Gold", Phone = "555", Title = "Admin" });
                 Users.Add(new User { UserId = 2, Username = "gold", FullName = "Tahsin Gold", Phone = "555", Title = "Manager" });
-                Users.Add(new User { UserId = 3, Username = "Misanur", FullName = "Misha Erbek", Phone = "555", Title = "Staff" });
-                Users.Add(new User { UserId = 4, Username = "pakuga", FullName = "Fatma Erbek", Phone = "555", Title = "Admin" });
-                Users.Add(new User { UserId = 5, Username = "urzul", FullName = "Emre Erbek", Phone = "555", Title = "Admin" });
+                Users.Add(new User { UserId = 3, Username = "Misanur", FullName = "Misha E", Phone = "555", Title = "Staff" });
+                Users.Add(new User { UserId = 4, Username = "pakuga", FullName = "Fatma E", Phone = "555", Title = "Admin" });
+                Users.Add(new User { UserId = 5, Username = "urzul", FullName = "Emre E", Phone = "555", Title = "Admin" });
             }
 
             // 2. ÜRÜN, ALIM VE SATIŞ VERİLERİNİ YÜKLE (Bilanço ve Raporlar için)
