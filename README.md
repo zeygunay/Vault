@@ -3,7 +3,7 @@
 ![C#](https://img.shields.io/badge/C%23-%23239120.svg?style=for-the-badge&logo=c-sharp&logoColor=white)
 ![.NET](https://img.shields.io/badge/.NET-5C2D91?style=for-the-badge&logo=.net&logoColor=white)
 ![Architecture](https://img.shields.io/badge/Architecture-FEFO%20%2F%20FIFO-blue?style=for-the-badge)
-
+[LICENSE](LICENSE)
 Vault is a highly robust, console-based Accounting and Inventory Management application developed in C#. It is designed to simulate real-world enterprise Resource Planning (ERP) mechanics, moving beyond basic CRUD operations by implementing advanced financial algorithms, batch-based inventory tracking, and dynamic reporting.
 
 ## 📑 Table of Contents
