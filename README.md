@@ -1,85 +1,70 @@
-# 🏦 Vault - Enterprise Console Accounting & Inventory System
+# Vault - .NET Console Accounting & Inventory Engine
 
-![C#](https://img.shields.io/badge/C%23-%23239120.svg?style=for-the-badge&logo=c-sharp&logoColor=white)
-![.NET](https://img.shields.io/badge/.NET-5C2D91?style=for-the-badge&logo=.net&logoColor=white)
-![Architecture](https://img.shields.io/badge/Architecture-FEFO%20%2F%20FIFO-blue?style=for-the-badge)
-[LICENSE](LICENSE)
-Vault is a highly robust, console-based Accounting and Inventory Management application developed in C#. It is designed to simulate real-world enterprise Resource Planning (ERP) mechanics, moving beyond basic CRUD operations by implementing advanced financial algorithms, batch-based inventory tracking, and dynamic reporting.
+![.NET](https://img.shields.io/badge/.NET-10.0-5C2D91?style=for-the-badge&logo=.net&logoColor=white)
+![C#](https://img.shields.io/badge/C%23-12.0-239120?style=for-the-badge&logo=c-sharp&logoColor=white)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)
 
-## 📑 Table of Contents
-1. [System Architecture & Business Logic](#-system-architecture--business-logic)
-2. [The FEFO Algorithm](#-the-fefo-algorithm)
-3. [Entity Relationships](#-entity-relationships)
-4. [Financial Calculations](#-financial-calculations)
-5. [Core Features](#-core-features)
-6. [Installation & Usage](#-installation--usage)
+Vault is a monolithic console application built on **.NET 10.0**. It acts as a lightweight Enterprise Resource Planning (ERP) engine, focusing on precise financial calculations, batch-based inventory state management, and strict audit trailing without relying on an external RDBMS.
 
----
+## 🏗️ Architecture & State Management
 
-## 🧠 System Architecture & Business Logic
+The application follows a simplified Service-Oriented Architecture (SOA) pattern, separating Domain Entities, Business Logic (Services), and Data State.
 
-Most beginner inventory applications use a single integer to track stock. **Vault uses a Batch-Based (Parti) tracking system.** This is crucial for handling real-world economic variables like inflation and varying expiration dates.
+* **In-Memory State (`DataBase.cs`):** Acts as the persistence layer using static `List<T>` collections. It simulates Primary Key (PK) auto-incrementation and Foreign Key (FK) relationships.
+* **Precision Financials:** All monetary properties utilize the C# `decimal` structure (128-bit) to prevent floating-point rounding errors common in `double` or `float` during financial aggregations.
+* **Culture-Agnostic Parsing:** Date inputs are handled via `DateTime.TryParseExact` with `DateTimeStyles.None` to ensure strict parsing (e.g., `dd.MM.yyyy`) regardless of the host OS regional settings.
 
-| Feature | Standard Beginner App | Vault Architecture |
-| :--- | :--- | :--- |
-| **Stock Tracking** | Single `StockCount` integer per product. | Array of `PurchaseBatch` objects per product. |
-| **Cost Basis** | Averages the cost or loses historical data. | Remembers the exact `PurchasePrice` of every batch. |
-| **Expiration** | Cannot track multiple expiration dates. | Tracks `ExpirationDate` for every single batch independently. |
-| **Profit Math** | Gross estimation based on current prices. | Exact calculation (COGS) matching the sold item to its original batch cost. |
+## 🗄️ Domain Models & Schema
 
----
+The system uses a 1:N relational mapping concept between `Product` and `PurchaseBatch` to isolate historical cost data from current market catalog prices.
 
-## ⚙️ The FEFO Algorithm 
-**(First-Expired, First-Out)**
+| Entity | PK / FK | Key Properties | Data Types | Business Purpose |
+| :--- | :--- | :--- | :--- | :--- |
+| `Product` | `ProductId` (PK) | `StockCode`, `BaseSalePrice` | `string`, `decimal` | Master catalog and current retail pricing. |
+| `PurchaseBatch`| `BatchId` (PK), `ProductId` (FK) | `QuantityRemaining`, `PurchasePrice`, `ExpirationDate` | `int`, `decimal`, `DateTime` | Tracks historical cost-basis and expiry per shipment. |
+| `SalesTransaction`| `SaleId` (PK), `ProductId` (FK) | `QuantitySold`, `TotalCost`, `SalePrice`, `PerformedBy` | `int`, `decimal`, `decimal`, `string` | Immutable ledger entry for revenue, COGS, and audit. |
+| `User` | `UserId` (PK) | `Username`, `Title` | `string`, `string` | Session context for audit logging (`PerformedBy`). |
 
-Vault implements a dynamic FEFO algorithm in its `AccountingService`. When a user initiates a sale, the system doesn't just subtract a number; it intelligently sources the items.
+## ⚙️ Core Algorithms: FEFO & COGS
 
-**Step-by-Step Execution:**
-1. **Query:** Retrieves all active batches for the requested Product ID where `QuantityRemaining > 0`.
-2. **Sort:** Uses LINQ to `.OrderBy(batch => batch.ExpirationDate)`.
-3. **Fulfill & Deduct:** - Deducts the requested quantity from the oldest batch.
-   - If the oldest batch doesn't have enough stock, it zeroes out that batch, carries over the remaining required quantity, and moves to the next oldest batch.
-4. **Log:** Records the exact historical cost of those specific items to generate 100% accurate profit margins.
+The most critical component is the `AccountingService.SellProduct()` method, which implements the **First-Expired, First-Out (FEFO)** algorithm combined with dynamic **Cost of Goods Sold (COGS)** calculation.
 
----
+### Execution Pipeline:
+1.  **LINQ Filtering & Sorting:**
+    ```csharp
+    var batchesToUse = DataBase.Purchases
+        .Where(b => b.ProductId == prodId && b.QuantityRemaining > 0)
+        .OrderBy(b => b.ExpirationDate)
+        .ToList();
+    ```
+    *Filters out depleted stock (O(N)) and sorts available batches chronologically by expiration (O(N log N)).*
 
-## 🗄️ Entity Relationships
+2.  **State Mutation (The Fulfillment Loop):**
+    Iterates through `batchesToUse`. It mutates the `QuantityRemaining` state of each batch. If a single batch cannot fulfill the requested `qtyToSell`, the loop zeroes out the current batch, aggregates its historical `PurchasePrice` into the `TotalCost` accumulator, and shifts the remaining deficit to the next chronological batch.
 
-The in-memory database simulates a relational database structure. Here is how the core entities interact:
+3.  **Profit Margin Integrity:** Because `TotalCost` is aggregated *per original batch cost* rather than the current catalog average, the calculated Net Profit (`Revenue - TotalCost`) remains 100% accurate even under hyper-inflationary data entries.
 
-| Entity | Key Properties | Role in System |
-| :--- | :--- | :--- |
-| **User** | `UserId`, `Username`, `Title` | Handles authentication and Audit Logging (who did what). |
-| **Product** | `ProductId`, `BaseSalePrice` | The master catalog. Holds the *current* market sale price. |
-| **PurchaseBatch**| `BatchId`, `QuantityRemaining`, `PurchasePrice`, `ExpirationDate` | Represents a specific delivery from a supplier. Holds *historical* cost data. |
-| **SalesTransaction**| `SaleId`, `QuantitySold`, `TotalCost`, `PerformedBy` | The permanent record of a sale, including the exact profit margin and the user's audit signature. |
+## 📊 Reporting & Data Aggregation
 
----
+The `ReportingService` leverages complex LINQ pipelines to generate financial statements in real-time.
 
-## 📊 Financial Calculations
+* **P&L Statement (Date-Range):** Uses `Where(s => s.SaleDate >= startDate && s.SaleDate <= endDate)` to isolate transactions. Aggregates data using `.Sum()` for metrics like Total Revenue, Total COGS, and Net Profit.
+* **Balance Sheet (Net Worth):** Dynamically calculates Total Assets by evaluating the active inventory at its *historical purchase cost*, not its retail value:
+    ```csharp
+    decimal warehouseValue = DataBase.Purchases.Sum(b => b.QuantityRemaining * b.PurchasePrice);
+    ```
+* **Console UI Formatting:** Implements fixed-width string interpolation (e.g., `String.Format("{0,-5} | {1,-20}...", ...)` to maintain strict tabular alignment in standard standard output (STDOUT).
 
-Vault acts as a mini-accountant, calculating real-time financial health using the following logic:
+## 🚀 CLI Compilation & Execution
 
-* **COGS (Cost of Goods Sold):** Calculated dynamically during the FEFO loop. `Sum of (Sold Batch Qty * Batch Original Purchase Price)`
-* **Net Profit per Sale:** `(Total Sale Revenue) - (COGS)`
-* **Total Inventory Value:** Evaluated at cost, not retail. `Sum of (QuantityRemaining * PurchasePrice)` for all active batches.
-* **Company Net Worth:** `(Cash In Register + Total Inventory Value) - Total Debt`
+To compile and run the project via the .NET CLI:
 
----
+```bash
+# Navigate to the project directory containing Vault.csproj
+cd Vault
 
-## 🚀 Core Features
+# Build the project
+dotnet build
 
-* **📦 Catalog & Inventory Management:** Define products, receive new shipments, and automatically update sale prices across the board.
-* **🛒 Smart Sales Engine:** Sell products with automatic FEFO stock deduction and real-time cash register updates.
-* **💳 Debt Management:** Pay off supplier debt directly from the cash register.
-* **📅 Date-Range Reporting:** Generate Profit & Loss (P&L) reports for specific months/years using advanced LINQ filtering.
-* **🏢 Dynamic Balance Sheet:** View total assets, liabilities, and real-time company net worth.
-* **🔐 Audit Logging:** Every purchase and sale transaction logs the `PerformedBy` tag (e.g., *Zeynepnur Gold (Admin)*) for security and accountability.
-
----
-
-## 💻 Installation & Usage
-
-1. **Clone the repository:**
-   ```bash
-   git clone [https://github.com/yourusername/Vault.git](https://github.com/yourusername/Vault.git)
+# Run the compiled executable
+dotnet run
